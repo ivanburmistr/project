@@ -344,6 +344,15 @@ p, li { white-space: pre-wrap; }
 </ui>
 """
 
+style = """
+QMainWindow { background-color: #f0f0f0; color: #000000; }
+QTextBrowser { background-color: #ffffff; color: #000000; border: 2px solid #cccccc; border-radius: 6px; padding: 7px; }
+QLineEdit { background-color: #ffffff; color: #000000; border: 2px solid #cccccc; border-radius: 6px; padding: 2px 5px; }
+QPushButton { background-color: #004494; color: #ffffff; border-radius: 6px; padding: 7px; }
+QPushButton:hover {background-color: #4da3ff; }
+QLineEdit:focus {border: 2px solid #004494; padding: 0px 3px; }
+"""
+
 signal_name = []
 signal_recipe = []
 
@@ -355,6 +364,7 @@ class Recipe(QWidget):
         super().__init__()
         f = io.StringIO(recipe)
         uic.loadUi(f, self)
+        self.setStyleSheet(style)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         while self.recipe.count() > 0:
             widget = self.recipe.widget(0)
@@ -493,6 +503,7 @@ class Main(QMainWindow):
         super().__init__()
         f = io.StringIO(mainwindow)
         uic.loadUi(f, self)
+        self.setStyleSheet(style)
         self.list_window = []
         self.list_elem = QStackedWidget()
         note = QLabel("Ингредиенты")
