@@ -66,7 +66,7 @@ class Recipe(QWidget):
     def old(self, input_name):
         self.input_name = input_name
         self.flag_who = "old"
-        con = sqlite3.connect("points.db")
+        con = sqlite3.connect("Базы данных/points.db")
         cur = con.cursor()
         result = cur.execute(
             """SELECT name, point FROM recipe WHERE name = ?""", (input_name,)
@@ -126,18 +126,18 @@ class Recipe(QWidget):
                 list_recipe.append(txt)
             str_recipe = ",00 35 ".join(list_recipe)
             signal_name.append(name_recipe)
-            con = sqlite3.connect("arts.db")
+            con = sqlite3.connect("Базы данных/arts.db")
             cur = con.cursor()
-            result = cur.execute(
+            cur.execute(
                 """INSERT OR IGNORE INTO art(name) VALUES(?) ON CONFLICT (name) DO NOTHING""",
                 (name_recipe,),
             )
             con.commit()
             con.close()
-            con = sqlite3.connect("points.db")
+            con = sqlite3.connect("Базы данных/points.db")
             cur = con.cursor()
             if self.flag_who == "new":
-                result = cur.execute(
+                cur.execute(
                     """INSERT OR IGNORE INTO recipe(name, point) VALUES(?, ?) ON CONFLICT (name) DO NOTHING""",
                     (
                         name_recipe,
@@ -152,7 +152,7 @@ class Recipe(QWidget):
                     )
                     return
             else:
-                result = cur.execute(
+                cur.execute(
                     """UPDATE recipe 
                     SET name = ?, point = ?
                     WHERE name = ?""",
@@ -204,7 +204,7 @@ class Save_csv:
                     self.time = f"{int(float(hour))}:{int(float(minutes))}:{sec}"
         self.save()
 
-    # Загруска файда csv в программу
+    # Загруска файла csv в программу
     def load_open(self):
         with open("count.csv", "r", encoding="utf8") as f:
             read = csv.reader(f, delimiter=",")
@@ -246,25 +246,45 @@ class Main(QMainWindow):
         self.arts = QStackedWidget()
         self.elements.insertWidget(0, self.arts)
 
+        cnt = 0
         if not os.path.isfile("Базы данных/points.db"):
+            cnt += 1
             con = sqlite3.connect("Базы данных/points.db")
             cur = con.cursor()
 
-            result = cur.execute("""CREATE TABLE recipe (
+            cur.execute("""CREATE TABLE recipe (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE,
                 point TEXT)""")
             con.commit()
+            con.close()
 
         if not os.path.isfile("Базы данных/arts.db"):
+            cnt += 1
             con = sqlite3.connect("Базы данных/arts.db")
             cur = con.cursor()
 
-            result = cur.execute("""CREATE TABLE art (
+            cur.execute("""CREATE TABLE art (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE,
                 name_art TEXT)""")
             con.commit()
+            con.close()
+
+        if cnt == 2:
+            con = sqlite3.connect("Базы данных/arts.db")
+            cur = con.cursor()
+
+            cur.execute("""INSERT INTO art(name) VALUES('Пирог')""")
+            con.commit()
+            con.close()
+
+            con = sqlite3.connect("Базы данных/points.db")
+            cur = con.cursor()
+
+            cur.execute("""INSERT INTO recipe(name, point) VALUES('Пирог', '1,00 35 2')""")
+            con.commit()
+            con.close()
 
         self.repair()
         self.addButton.clicked.connect(self.new_recipe)
@@ -283,7 +303,7 @@ class Main(QMainWindow):
         self.timer.timeout.connect(self.update_timer)
 
     def repair(self):
-        con = sqlite3.connect("points.db")
+        con = sqlite3.connect("Базы данных/points.db")
         cur = con.cursor()
 
         result = cur.execute("""SELECT name FROM recipe""")
@@ -300,7 +320,7 @@ class Main(QMainWindow):
             )
         con.close()
 
-        con = sqlite3.connect("arts.db")
+        con = sqlite3.connect("Базы данных/arts.db")
         cur = con.cursor()
 
         result = cur.execute("""SELECT name_art FROM art""").fetchall()
@@ -310,13 +330,14 @@ class Main(QMainWindow):
             current_widget = self.arts.widget(i)
             label_widget = current_widget.findChild(QLabel)
             pixmap = QPixmap(way)
-            scaled_pixmap = pixmap.scaled(
-                350,
-                350,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-            label_widget.setPixmap(scaled_pixmap)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(
+                    350,
+                    350,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                label_widget.setPixmap(scaled_pixmap)
         con.close()
 
     # Создание второго окна
@@ -353,13 +374,13 @@ class Main(QMainWindow):
                     Qt.TransformationMode.SmoothTransformation,
                 )
                 label_widget.setPixmap(scaled_pixmap)
-            con = sqlite3.connect("arts.db")
+            con = sqlite3.connect("Базы данных/arts.db")
             cur = con.cursor()
 
             result = cur.execute(
                 """UPDATE art
-                                 SET name_art = ?
-                                 WHERE name = ?""",
+                    SET name_art = ?
+                    WHERE name = ?""",
                 (
                     fname,
                     self.recipes_list.item(self.index).text(),
@@ -398,6 +419,10 @@ class Main(QMainWindow):
             self.statusBar().showMessage(
                 f"Поздравляем у тебя целых {count_recipes} рецептов"
             )
+        else:
+            self.statusBar().showMessage(
+                    f"Кол-во {len(self.recipes_list)} рецептов, кол-во часов {self.total_hour}"
+                )
 
     # Метод для старта таймера
     def start(self):
@@ -446,10 +471,10 @@ class Main(QMainWindow):
 
     # Удаляет рецепт из recipes_list
     def dele(self):
-        con = sqlite3.connect("arts.db")
+        con = sqlite3.connect("Базы данных/arts.db")
         cur = con.cursor()
 
-        result = cur.execute(
+        cur.execute(
             """DELETE FROM art WHERE name = ?""",
             (self.recipes_list.item(self.index).text(),),
         )
@@ -457,17 +482,17 @@ class Main(QMainWindow):
         con.commit()
         con.close()
 
-        con = sqlite3.connect("points.db")
+        con = sqlite3.connect("Базы данных/points.db")
         cur = con.cursor()
 
-        result = cur.execute(
+        cur.execute(
             """DELETE FROM recipe WHERE name = ?""",
             (self.recipes_list.item(self.index).text(),),
         )
 
         con.commit()
         con.close()
-
+        
         recipe = self.recipes_list.takeItem(self.index)
         del recipe
 
