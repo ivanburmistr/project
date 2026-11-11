@@ -31,7 +31,7 @@
            <widget class="QListWidget" name="recipes_list"/>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="elements" stretch="0,0,0,0,0">
+           <layout class="QVBoxLayout" name="elements" stretch="0,0,0,0,0,0">
             <item>
              <spacer name="verticalSpacer">
               <property name="orientation">
@@ -56,6 +56,13 @@
              <widget class="QPushButton" name="del_Button">
               <property name="text">
                <string>Удалить</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="addart_Button">
+              <property name="text">
+               <string>Добавить картинку</string>
               </property>
              </widget>
             </item>

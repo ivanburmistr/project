@@ -17,332 +17,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPixmap, QKeySequence, QShortcut
 import datetime as dt
-
-# шаблон первого окна
-mainwindow = """<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>721</width>
-    <height>600</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>MainWindow</string>
-  </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QTabWidget" name="tabWidget">
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="tab">
-       <attribute name="title">
-        <string>Рецепты</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1">
-          <item>
-           <widget class="QListWidget" name="recipes_list"/>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="elements" stretch="0,0,0,0,0">
-            <item>
-             <spacer name="verticalSpacer">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <widget class="QPushButton" name="open_Button">
-              <property name="text">
-               <string>Открыть</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="del_Button">
-              <property name="text">
-               <string>Удалить</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Кол-во приготовленных блюд</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="count_ready"/>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_2">
-       <attribute name="title">
-        <string>Добавить</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout" stretch="2,1">
-          <property name="spacing">
-           <number>6</number>
-          </property>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_5">
-            <item>
-             <widget class="QLabel" name="art">
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
-            <item>
-             <widget class="QPushButton" name="addButton">
-              <property name="text">
-               <string>Добавить</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="tab_3">
-       <attribute name="title">
-        <string>Таймер</string>
-       </attribute>
-       <layout class="QGridLayout" name="gridLayout_4">
-        <item row="0" column="0">
-         <layout class="QVBoxLayout" name="verticalLayout_2" stretch="7,5,0,0,0">
-          <item>
-           <widget class="QLCDNumber" name="time"/>
-          </item>
-          <item>
-           <widget class="QTimeEdit" name="cnt_time"/>
-          </item>
-          <item>
-           <widget class="QPushButton" name="start_Button">
-            <property name="text">
-             <string>Старт</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="stop_Button">
-            <property name="text">
-             <string>Стоп</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="label">
-            <property name="font">
-             <font>
-              <weight>75</weight>
-              <italic>false</italic>
-              <bold>true</bold>
-              <underline>false</underline>
-              <strikeout>false</strikeout>
-             </font>
-            </property>
-            <property name="text">
-             <string>часы:минуты</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>721</width>
-     <height>21</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QStatusBar" name="statusbar"/>
- </widget>
- <resources/>
- <connections/>
-</ui>
-"""
-# шаблон второго окна
-recipe = """<?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>600</width>
-    <height>700</height>
-   </rect>
-  </property>
-  <property name="windowTitle">
-   <string>Form</string>
-  </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0">
-    <layout class="QGridLayout" name="gridLayout_2">
-     <item row="0" column="0">
-      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,1,0,6">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QTextEdit" name="name">
-           <property name="font">
-            <font>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="html">
-            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:600; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Введите название блюда.&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Пункты годовки.</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QStackedWidget" name="recipe">
-         <property name="currentIndex">
-          <number>0</number>
-         </property>
-         <widget class="QWidget" name="page_3"/>
-         <widget class="QWidget" name="page_4"/>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="0" column="1">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0">
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="add">
-         <property name="text">
-          <string>Добавить</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="save_Button">
-         <property name="text">
-          <string>Сохранить</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QTextEdit" name="premch">
-         <property name="styleSheet">
-          <string notr="true">QTextEdit {background-color: transparent; border: none}</string>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-         <property name="html">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Кнопка 'Добавить' добавляет пункт.&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Для переключения между пунктами можно использовать &amp;quot;&amp;lt;-&amp;quot; или &amp;quot;-&amp;gt;&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-    </layout>
-   </item>
-  </layout>
- </widget>
- <resources/>
- <connections/>
-</ui>
-"""
+import sqlite3
+import os
 
 style = """
 QMainWindow { background-color: #f0f0f0; color: #000000; }
@@ -354,7 +30,6 @@ QLineEdit:focus {border: 2px solid #004494; padding: 0px 3px; }
 """
 
 signal_name = []
-signal_recipe = []
 
 
 class Recipe(QWidget):
@@ -362,31 +37,59 @@ class Recipe(QWidget):
 
     def __init__(self):
         super().__init__()
-        f = io.StringIO(recipe)
-        uic.loadUi(f, self)
+        uic.loadUi("Шаблоны/recipe.ui", self)
         self.setStyleSheet(style)
+        self.setWindowTitle("Рецепт")
+
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+
         while self.recipe.count() > 0:
             widget = self.recipe.widget(0)
             self.recipe.removeWidget(widget)
-        self.new_point()
+
+        self.flag_who = "new"
+
         self.left = QShortcut(QKeySequence("Left"), self)
         self.left.activated.connect(lambda sign="-": self.moving(sign))
+
         self.right = QShortcut(QKeySequence("Right"), self)
         self.right.activated.connect(lambda sign="+": self.moving(sign))
+
         self.save_Button.clicked.connect(self.save)
         self.add.clicked.connect(self.new_point)
 
     # Добавление в SteckWidget пункта
+    def new(self):
+        self.new_point()
+        self.name.setText("Введите название рецепта")
+
+    def old(self, input_name):
+        self.input_name = input_name
+        self.flag_who = "old"
+        con = sqlite3.connect("points.db")
+        cur = con.cursor()
+        result = cur.execute(
+            """SELECT name, point FROM recipe WHERE name = ?""", (input_name,)
+        ).fetchall()
+        self.name.setText(result[0][0])
+        list_point = result[0][1].split(",00 35 ")
+        for i in range(len(list_point)):
+            new_widget = QWidget()
+            layout = QVBoxLayout(new_widget)
+
+            txt = QTextEdit()
+            txt.setPlainText(list_point[i])
+            layout.addWidget(txt)
+
+            self.recipe.addWidget(new_widget)
+
+    # Новый пункт
     def new_point(self):
         new_widget = QWidget()
         layout = QVBoxLayout(new_widget)
 
         txt = QTextEdit()
-        layout.addWidget(txt, 1)
-
-        art = QLabel()
-        layout.addWidget(art, 2)
+        layout.addWidget(txt)
 
         self.recipe.addWidget(new_widget)
         self.recipe.setCurrentWidget(new_widget)
@@ -395,7 +98,6 @@ class Recipe(QWidget):
     def moving(self, sign):
         tot_widget = self.recipe.count()
         current_indx = self.recipe.currentIndex()
-        print(current_indx)
         if sign == "-":
             current_indx = current_indx - 1
         else:
@@ -413,33 +115,56 @@ class Recipe(QWidget):
 
     # Сохранение
     def save(self):
-        name_recipe = self.name.toPlainText().rstrip()
+        name_recipe = self.name.toPlainText().rstrip().lstrip()
         if len(name_recipe) <= 2:
             self.name.setPlainText("Должно быть больше 2 символов!!!")
         else:
+            list_recipe = []
+            for i in range(self.recipe.count()):
+                textedit = self.recipe.widget(i).findChild(QTextEdit)
+                txt = textedit.toPlainText().rstrip().lstrip()
+                list_recipe.append(txt)
+            str_recipe = ",00 35 ".join(list_recipe)
             signal_name.append(name_recipe)
-            ...
-            self.close()
-
-    # Добавление картинки
-    def addart(self):
-        fname = QFileDialog.getOpenFileName(
-            self,
-            "Выбрать картинку",
-            "",
-            "Картинка (*.jpg);;Картинка (*.png);;Картинка (*.webp);",
-        )[0]
-        if fname:
-            current_widget = self.recipe.currentWidget()
-            label_widget = current_widget.findChild(QLabel)
-            pixmap = QPixmap(fname)
-            scaled_pixmap = pixmap.scaled(
-                350,
-                350,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+            con = sqlite3.connect("arts.db")
+            cur = con.cursor()
+            result = cur.execute(
+                """INSERT OR IGNORE INTO art(name) VALUES(?) ON CONFLICT (name) DO NOTHING""",
+                (name_recipe,),
             )
-            label_widget.setPixmap(scaled_pixmap)
+            con.commit()
+            con.close()
+            con = sqlite3.connect("points.db")
+            cur = con.cursor()
+            if self.flag_who == "new":
+                result = cur.execute(
+                    """INSERT OR IGNORE INTO recipe(name, point) VALUES(?, ?) ON CONFLICT (name) DO NOTHING""",
+                    (
+                        name_recipe,
+                        str_recipe,
+                    ),
+                )
+                con.commit()
+
+                if cur.rowcount == 0:
+                    self.name.setPlainText(
+                        f"{self.name.toPlainText()}\nЗапись с таким именем уже есть"
+                    )
+                    return
+            else:
+                result = cur.execute(
+                    """UPDATE recipe 
+                    SET name = ?, point = ?
+                    WHERE name = ?""",
+                    (
+                        name_recipe,
+                        str_recipe,
+                        self.input_name,
+                    ),
+                )
+                con.commit()
+            con.close()
+            self.close()
 
 
 class Save_csv:
@@ -501,14 +226,10 @@ class Main(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        f = io.StringIO(mainwindow)
-        uic.loadUi(f, self)
+        uic.loadUi("Шаблоны/main_window.ui", self)
         self.setStyleSheet(style)
         self.list_window = []
-        self.list_elem = QStackedWidget()
-        note = QLabel("Ингредиенты")
-        self.elements.insertWidget(0, self.list_elem)
-        self.elements.insertWidget(0, note)
+        self.setWindowTitle("Книга рецептов")
         pixmap = QPixmap("картинка на добавить.jpg")
         scaled_pixmap = pixmap.scaled(
             700,
@@ -522,20 +243,86 @@ class Main(QMainWindow):
         value_ready = int(value_ready)
         self.count_ready.setValue(value_ready)
         self.start_time = dt.datetime.now()
+        self.arts = QStackedWidget()
+        self.elements.insertWidget(0, self.arts)
 
+        if not os.path.isfile("Базы данных/points.db"):
+            con = sqlite3.connect("Базы данных/points.db")
+            cur = con.cursor()
+
+            result = cur.execute("""CREATE TABLE recipe (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                point TEXT)""")
+            con.commit()
+
+        if not os.path.isfile("Базы данных/arts.db"):
+            con = sqlite3.connect("Базы данных/arts.db")
+            cur = con.cursor()
+
+            result = cur.execute("""CREATE TABLE art (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                name_art TEXT)""")
+            con.commit()
+
+        self.repair()
         self.addButton.clicked.connect(self.new_recipe)
         self.open_Button.clicked.connect(self.open_change)
         self.del_Button.clicked.connect(self.dele)
+
+        self.addart_Button.clicked.connect(self.add_art)
+
         self.recipes_list.currentRowChanged.connect(self.switch_page)
+
         self.start_Button.clicked.connect(self.start)
         self.stop_Button.setEnabled(False)
         self.stop_Button.clicked.connect(self.stop)
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
+
+    def repair(self):
+        con = sqlite3.connect("points.db")
+        cur = con.cursor()
+
+        result = cur.execute("""SELECT name FROM recipe""")
+        for i in result:
+            i = i[0]
+            new_widget = QWidget()
+            layout = QVBoxLayout(new_widget)
+            art = QLabel()
+            layout.addWidget(art)
+            self.arts.addWidget(new_widget)
+            self.recipes_list.addItem(i)
+            self.statusBar().showMessage(
+                f"Кол-во {len(self.recipes_list)} рецептов, кол-во часов {self.total_hour}"
+            )
+        con.close()
+
+        con = sqlite3.connect("arts.db")
+        cur = con.cursor()
+
+        result = cur.execute("""SELECT name_art FROM art""").fetchall()
+
+        for i in range(len(result)):
+            way = result[i][0]
+            current_widget = self.arts.widget(i)
+            label_widget = current_widget.findChild(QLabel)
+            pixmap = QPixmap(way)
+            scaled_pixmap = pixmap.scaled(
+                350,
+                350,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            label_widget.setPixmap(scaled_pixmap)
+        con.close()
 
     # Создание второго окна
     def new_recipe(self):
         window_recipe = Recipe()
+        window_recipe.new()
         self.list_window.append(window_recipe)
         window_recipe.destroyed.connect(lambda: self.remove(window_recipe))
         window_recipe.destroyed.connect(self.add_recipe)
@@ -546,19 +333,57 @@ class Main(QMainWindow):
         if window_recipe in self.list_window:
             self.list_window.remove(window_recipe)
 
+    # Добавление картинки
+    def add_art(self):
+        if self.recipes_list.currentRow() != -1:
+            fname = QFileDialog.getOpenFileName(
+                self,
+                "Выбрать картинку",
+                "",
+                "Картинка (*.jpg);;Картинка (*.png);;Картинка (*.webp);",
+            )[0]
+            if fname:
+                current_widget = self.arts.currentWidget()
+                label_widget = current_widget.findChild(QLabel)
+                pixmap = QPixmap(fname)
+                scaled_pixmap = pixmap.scaled(
+                    350,
+                    350,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+                label_widget.setPixmap(scaled_pixmap)
+            con = sqlite3.connect("arts.db")
+            cur = con.cursor()
+
+            result = cur.execute(
+                """UPDATE art
+                                 SET name_art = ?
+                                 WHERE name = ?""",
+                (
+                    fname,
+                    self.recipes_list.item(self.index).text(),
+                ),
+            )
+            con.commit()
+            con.close()
+        else:
+            self.statusBar().showMessage("Не выбран рецепт или нет рецептов")
+
     # Запись названия в recipes_list
     def add_recipe(self):
-        if len(signal_name) != 0:
-            if signal_name[0] not in [
+        if signal_name != []:
+            new_name = signal_name[0]
+            if new_name not in [
                 self.recipes_list.item(i).text()
                 for i in range(self.recipes_list.count())
             ]:
                 new_widget = QWidget()
                 layout = QVBoxLayout(new_widget)
-                txt = QTextEdit()
-                layout.addWidget(txt)
-                self.list_elem.addWidget(new_widget)
-                self.recipes_list.addItem(signal_name[0])
+                art = QLabel()
+                layout.addWidget(art)
+                self.arts.addWidget(new_widget)
+                self.recipes_list.addItem(new_name)
                 self.statusBar().showMessage(
                     f"Кол-во {len(self.recipes_list)} рецептов, кол-во часов {self.total_hour}"
                 )
@@ -566,7 +391,8 @@ class Main(QMainWindow):
 
     # Перемещение по recipes_list
     def switch_page(self, index):
-        self.list_elem.setCurrentIndex(index)
+        self.index = self.recipes_list.currentRow()
+        self.arts.setCurrentIndex(index)
         count_recipes = len(self.recipes_list)
         if count_recipes % 100 == 0:
             self.statusBar().showMessage(
@@ -600,11 +426,50 @@ class Main(QMainWindow):
 
     # Метод кнопки открытия второго окна
     def open_change(self):
-        pass
+        window_recipe = Recipe()
+        name = self.recipes_list.item(self.index).text()
+        window_recipe.old(name)
+        self.list_window.append(window_recipe)
+        window_recipe.destroyed.connect(lambda: self.remove(window_recipe))
+        window_recipe.destroyed.connect(self.update_recipe)
+        window_recipe.show()
+
+    def update_recipe(self):
+        if signal_name != []:
+            new_name = signal_name[0]
+            if new_name not in [
+                self.recipes_list.item(i).text()
+                for i in range(self.recipes_list.count())
+            ]:
+                self.recipes_list.item(self.index).setText(new_name)
+        signal_name.clear()
 
     # Удаляет рецепт из recipes_list
     def dele(self):
-        pass
+        con = sqlite3.connect("arts.db")
+        cur = con.cursor()
+
+        result = cur.execute(
+            """DELETE FROM art WHERE name = ?""",
+            (self.recipes_list.item(self.index).text(),),
+        )
+
+        con.commit()
+        con.close()
+
+        con = sqlite3.connect("points.db")
+        cur = con.cursor()
+
+        result = cur.execute(
+            """DELETE FROM recipe WHERE name = ?""",
+            (self.recipes_list.item(self.index).text(),),
+        )
+
+        con.commit()
+        con.close()
+
+        recipe = self.recipes_list.takeItem(self.index)
+        del recipe
 
     # Диалоговое окно закрытия
     def closeEvent(self, event):
