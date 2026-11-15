@@ -10,15 +10,16 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QTextEdit,
     QLabel,
-    QPushButton,
     QStackedWidget,
     QMessageBox,
+    QSizePolicy,
 )
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QUrl
 from PyQt6.QtGui import QPixmap, QKeySequence, QShortcut
 import datetime as dt
 import sqlite3
 import os
+from PyQt6.QtMultimedia import QSoundEffect
 
 style = """
 QMainWindow { background-color: #f0f0f0; color: #000000; }
@@ -126,17 +127,20 @@ class Recipe(QWidget):
                 list_recipe.append(txt)
             str_recipe = ",00 35 ".join(list_recipe)
             signal_name.append(name_recipe)
-            con = sqlite3.connect("Базы данных/arts.db")
-            cur = con.cursor()
-            cur.execute(
-                """INSERT OR IGNORE INTO art(name) VALUES(?) ON CONFLICT (name) DO NOTHING""",
-                (name_recipe,),
-            )
-            con.commit()
-            con.close()
-            con = sqlite3.connect("Базы данных/points.db")
-            cur = con.cursor()
+
             if self.flag_who == "new":
+                con = sqlite3.connect("Базы данных/arts.db")
+                cur = con.cursor()
+                cur.execute(
+                    """INSERT OR IGNORE INTO art(name) VALUES(?) ON CONFLICT (name) DO NOTHING""",
+                    (name_recipe,),
+                )
+                con.commit()
+                con.close()
+
+                con = sqlite3.connect("Базы данных/points.db")
+                cur = con.cursor()
+
                 cur.execute(
                     """INSERT OR IGNORE INTO recipe(name, point) VALUES(?, ?) ON CONFLICT (name) DO NOTHING""",
                     (
@@ -145,6 +149,7 @@ class Recipe(QWidget):
                     ),
                 )
                 con.commit()
+                con.close()
 
                 if cur.rowcount == 0:
                     self.name.setPlainText(
@@ -152,6 +157,9 @@ class Recipe(QWidget):
                     )
                     return
             else:
+                con = sqlite3.connect("Базы данных/points.db")
+                cur = con.cursor()
+
                 cur.execute(
                     """UPDATE recipe 
                     SET name = ?, point = ?
@@ -163,7 +171,22 @@ class Recipe(QWidget):
                     ),
                 )
                 con.commit()
-            con.close()
+                con.close()
+
+                con2 = sqlite3.connect("Базы данных/arts.db")
+                cur2 = con2.cursor()
+
+                cur2.execute(
+                    """UPDATE art 
+                    SET name = ?
+                    WHERE name = ?""",
+                    (
+                        name_recipe,
+                        self.input_name,
+                    ),
+                )
+                con2.commit()
+                con2.close()
             self.close()
 
 
@@ -237,8 +260,11 @@ class Main(QMainWindow):
             Qt.AspectRatioMode.IgnoreAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
+
+        self.orig_art = {}
         self.art.setPixmap(scaled_pixmap)
-        self.time.setDigitCount(5)
+        self.time.setDigitCount(8)
+        self.time.display("00:00:00")
         value_ready, self.total_hour = Save_csv().load_open()
         value_ready = int(value_ready)
         self.count_ready.setValue(value_ready)
@@ -282,10 +308,20 @@ class Main(QMainWindow):
             con = sqlite3.connect("Базы данных/points.db")
             cur = con.cursor()
 
-            cur.execute("""INSERT INTO recipe(name, point) VALUES('Пирог', '1,00 35 2')""")
+            cur.execute(
+                """INSERT INTO recipe(name, point) VALUES('Пирог', '1,00 35 2')"""
+            )
             con.commit()
             con.close()
 
+        self.cnt = 0
+
+        self.alaram_sound = QSoundEffect()
+        self.alaram_sound.setSource(QUrl.fromLocalFile("таймер звук.wav"))
+        self.alaram_sound.setVolume(0.8)
+        self.alaram_sound.setLoopCount(QSoundEffect.Loop.Infinite.value)
+
+        self.tabWidget.currentChanged.connect(self.update_image)
         self.repair()
         self.addButton.clicked.connect(self.new_recipe)
         self.open_Button.clicked.connect(self.open_change)
@@ -302,6 +338,7 @@ class Main(QMainWindow):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
 
+    # База данных
     def repair(self):
         con = sqlite3.connect("Базы данных/points.db")
         cur = con.cursor()
@@ -312,6 +349,7 @@ class Main(QMainWindow):
             new_widget = QWidget()
             layout = QVBoxLayout(new_widget)
             art = QLabel()
+            art.setMinimumSize(1, 1)
             layout.addWidget(art)
             self.arts.addWidget(new_widget)
             self.recipes_list.addItem(i)
@@ -331,14 +369,31 @@ class Main(QMainWindow):
             label_widget = current_widget.findChild(QLabel)
             pixmap = QPixmap(way)
             if not pixmap.isNull():
-                scaled_pixmap = pixmap.scaled(
-                    350,
-                    350,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-                label_widget.setPixmap(scaled_pixmap)
+                self.update_image()
+                self.orig_art[label_widget] = pixmap
+        self.arts.widget(0)
         con.close()
+
+    def update_image(self):
+        if len(self.recipes_list) != 0:
+            current_widget = self.arts.currentWidget()
+            label_widget = current_widget.findChild(QLabel)
+            label_widget.setSizePolicy(
+                QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored
+            )
+            pixmap = self.orig_art.get(label_widget)
+            if pixmap:
+                scaled_pixmap = pixmap.scaled(label_widget.size())
+                label_widget.setPixmap(scaled_pixmap)
+        self.art.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+        pixmap = QPixmap("картинка на добавить.jpg")
+        if pixmap:
+            scaled_pixmap = pixmap.scaled(self.art.size())
+            self.art.setPixmap(scaled_pixmap)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        QTimer.singleShot(0, self.update_image)
 
     # Создание второго окна
     def new_recipe(self):
@@ -367,17 +422,12 @@ class Main(QMainWindow):
                 current_widget = self.arts.currentWidget()
                 label_widget = current_widget.findChild(QLabel)
                 pixmap = QPixmap(fname)
-                scaled_pixmap = pixmap.scaled(
-                    350,
-                    350,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-                label_widget.setPixmap(scaled_pixmap)
+                self.update_image()
+                self.orig_art[label_widget] = pixmap
             con = sqlite3.connect("Базы данных/arts.db")
             cur = con.cursor()
 
-            result = cur.execute(
+            cur.execute(
                 """UPDATE art
                     SET name_art = ?
                     WHERE name = ?""",
@@ -402,6 +452,7 @@ class Main(QMainWindow):
                 new_widget = QWidget()
                 layout = QVBoxLayout(new_widget)
                 art = QLabel()
+                art.setMinimumSize(1, 1)
                 layout.addWidget(art)
                 self.arts.addWidget(new_widget)
                 self.recipes_list.addItem(new_name)
@@ -421,33 +472,45 @@ class Main(QMainWindow):
             )
         else:
             self.statusBar().showMessage(
-                    f"Кол-во {len(self.recipes_list)} рецептов, кол-во часов {self.total_hour}"
-                )
+                f"Кол-во {len(self.recipes_list)} рецептов, кол-во часов {self.total_hour}"
+            )
+        self.update_image()
 
     # Метод для старта таймера
     def start(self):
         input_time = self.cnt_time.time()
         self.dt_time = input_time
-        input_time = input_time.toString("hh:mm")
-        self.timer.start(60000)
         self.start_Button.setEnabled(False)
         self.stop_Button.setEnabled(True)
+        input_time = input_time.toString("hh:mm:ss")
+        if input_time == "00:00:00":
+            self.stop()
+            return
+        self.timer.start(1000)
+
         self.time.display(input_time)
 
     # Метод обновление таймера
     def update_timer(self):
-        self.dt_time = self.dt_time.addSecs(-60)
-        str_time = self.dt_time.toString("hh:mm")
+        self.dt_time = self.dt_time.addSecs(-1)
+        str_time = self.dt_time.toString("hh:mm:ss")
         self.time.display(str_time)
-        if str_time == "00:00":
+        if str_time == "00:00:00":
             self.stop()
 
     # Метод остоновки таймера
     def stop(self):
-        self.stop_Button.setEnabled(False)
-        self.start_Button.setEnabled(True)
-        self.time.display("00:00")
-        self.timer.stop()
+        self.cnt += 1
+        if self.cnt == 1:
+            self.alaram_sound.play()
+            self.timer.stop()
+            self.time.display("00:00:00")
+            self.tabWidget.setCurrentIndex(2)
+        elif self.cnt == 2:
+            self.stop_Button.setEnabled(False)
+            self.start_Button.setEnabled(True)
+            self.alaram_sound.stop()
+            self.cnt = 0
 
     # Метод кнопки открытия второго окна
     def open_change(self):
@@ -471,30 +534,39 @@ class Main(QMainWindow):
 
     # Удаляет рецепт из recipes_list
     def dele(self):
-        con = sqlite3.connect("Базы данных/arts.db")
-        cur = con.cursor()
+        if self.recipes_list.currentRow() != -1:
+            con = sqlite3.connect("Базы данных/arts.db")
+            cur = con.cursor()
 
-        cur.execute(
-            """DELETE FROM art WHERE name = ?""",
-            (self.recipes_list.item(self.index).text(),),
-        )
+            cur.execute(
+                """DELETE FROM art WHERE name = ?""",
+                (self.recipes_list.item(self.index).text(),),
+            )
 
-        con.commit()
-        con.close()
+            con.commit()
+            con.close()
 
-        con = sqlite3.connect("Базы данных/points.db")
-        cur = con.cursor()
+            con = sqlite3.connect("Базы данных/points.db")
+            cur = con.cursor()
 
-        cur.execute(
-            """DELETE FROM recipe WHERE name = ?""",
-            (self.recipes_list.item(self.index).text(),),
-        )
+            cur.execute(
+                """DELETE FROM recipe WHERE name = ?""",
+                (self.recipes_list.item(self.index).text(),),
+            )
 
-        con.commit()
-        con.close()
-        
-        recipe = self.recipes_list.takeItem(self.index)
-        del recipe
+            con.commit()
+            con.close()
+
+            widget = self.arts.widget(self.index)
+            if widget in self.orig_art:
+                del self.orig_art[widget]
+            self.arts.removeWidget(widget)
+            widget.deleteLater()
+            recipe = self.recipes_list.takeItem(self.index)
+            del recipe
+            self.statusBar().showMessage(
+                f"Кол-во {len(self.recipes_list)} рецептов, кол-во часов {self.total_hour}"
+            )
 
     # Диалоговое окно закрытия
     def closeEvent(self, event):
