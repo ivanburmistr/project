@@ -78,7 +78,7 @@ p, li { white-space: pre-wrap; }
       </widget>
      </item>
      <item row="0" column="2">
-      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0">
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0">
        <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
@@ -103,6 +103,13 @@ p, li { white-space: pre-wrap; }
         <widget class="QPushButton" name="save_Button">
          <property name="text">
           <string>Сохранить</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="delpoint_Button">
+         <property name="text">
+          <string>Удалить</string>
          </property>
         </widget>
        </item>

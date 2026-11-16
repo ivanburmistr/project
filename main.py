@@ -1,5 +1,3 @@
-import csv
-import io
 import sys
 from PyQt6 import uic
 from PyQt6.QtWidgets import (
@@ -8,240 +6,27 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QFileDialog,
     QVBoxLayout,
-    QTextEdit,
     QLabel,
     QStackedWidget,
     QMessageBox,
     QSizePolicy,
 )
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtCore import Qt, QTimer, QUrl
-from PyQt6.QtGui import QPixmap, QKeySequence, QShortcut
+from PyQt6.QtGui import QPixmap
 import datetime as dt
 import sqlite3
 import os
 from PyQt6.QtMultimedia import QSoundEffect
+from classes.recipe import Recipe
+from classes.signal import signal_name
+from classes.save_csv import Save_csv
 
 style = """
 QMainWindow { background-color: #f0f0f0; color: #000000; }
-QTextBrowser { background-color: #ffffff; color: #000000; border: 2px solid #cccccc; border-radius: 6px; padding: 7px; }
-QLineEdit { background-color: #ffffff; color: #000000; border: 2px solid #cccccc; border-radius: 6px; padding: 2px 5px; }
 QPushButton { background-color: #004494; color: #ffffff; border-radius: 6px; padding: 7px; }
 QPushButton:hover {background-color: #4da3ff; }
-QLineEdit:focus {border: 2px solid #004494; padding: 0px 3px; }
 """
-
-signal_name = []
-
-
-class Recipe(QWidget):
-    """Второй класс окно. В нем можно записать новый рецепт"""
-
-    def __init__(self):
-        super().__init__()
-        uic.loadUi("Шаблоны/recipe.ui", self)
-        self.setStyleSheet(style)
-        self.setWindowTitle("Рецепт")
-
-        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-
-        while self.recipe.count() > 0:
-            widget = self.recipe.widget(0)
-            self.recipe.removeWidget(widget)
-
-        self.flag_who = "new"
-
-        self.left = QShortcut(QKeySequence("Left"), self)
-        self.left.activated.connect(lambda sign="-": self.moving(sign))
-
-        self.right = QShortcut(QKeySequence("Right"), self)
-        self.right.activated.connect(lambda sign="+": self.moving(sign))
-
-        self.save_Button.clicked.connect(self.save)
-        self.add.clicked.connect(self.new_point)
-
-    # Добавление в SteckWidget пункта
-    def new(self):
-        self.new_point()
-        self.name.setText("Введите название рецепта")
-
-    def old(self, input_name):
-        self.input_name = input_name
-        self.flag_who = "old"
-        con = sqlite3.connect("Базы данных/points.db")
-        cur = con.cursor()
-        result = cur.execute(
-            """SELECT name, point FROM recipe WHERE name = ?""", (input_name,)
-        ).fetchall()
-        self.name.setText(result[0][0])
-        list_point = result[0][1].split(",00 35 ")
-        for i in range(len(list_point)):
-            new_widget = QWidget()
-            layout = QVBoxLayout(new_widget)
-
-            txt = QTextEdit()
-            txt.setPlainText(list_point[i])
-            layout.addWidget(txt)
-
-            self.recipe.addWidget(new_widget)
-
-    # Новый пункт
-    def new_point(self):
-        new_widget = QWidget()
-        layout = QVBoxLayout(new_widget)
-
-        txt = QTextEdit()
-        layout.addWidget(txt)
-
-        self.recipe.addWidget(new_widget)
-        self.recipe.setCurrentWidget(new_widget)
-
-    # Перемещение по SteckWidget
-    def moving(self, sign):
-        tot_widget = self.recipe.count()
-        current_indx = self.recipe.currentIndex()
-        if sign == "-":
-            current_indx = current_indx - 1
-        else:
-            current_indx = current_indx + 1
-
-        if 0 <= current_indx <= tot_widget:
-            self.recipe.setCurrentIndex(current_indx)
-
-    # Перемещение курсора
-    def mousePressEvent(self, event):
-        super().mousePressEvent(event)
-        focused_widget = self.focusWidget()
-        if focused_widget:
-            focused_widget.clearFocus()
-
-    # Сохранение
-    def save(self):
-        name_recipe = self.name.toPlainText().rstrip().lstrip()
-        if len(name_recipe) <= 2:
-            self.name.setPlainText("Должно быть больше 2 символов!!!")
-        else:
-            list_recipe = []
-            for i in range(self.recipe.count()):
-                textedit = self.recipe.widget(i).findChild(QTextEdit)
-                txt = textedit.toPlainText().rstrip().lstrip()
-                list_recipe.append(txt)
-            str_recipe = ",00 35 ".join(list_recipe)
-            signal_name.append(name_recipe)
-
-            if self.flag_who == "new":
-                con = sqlite3.connect("Базы данных/arts.db")
-                cur = con.cursor()
-                cur.execute(
-                    """INSERT OR IGNORE INTO art(name) VALUES(?) ON CONFLICT (name) DO NOTHING""",
-                    (name_recipe,),
-                )
-                con.commit()
-                con.close()
-
-                con = sqlite3.connect("Базы данных/points.db")
-                cur = con.cursor()
-
-                cur.execute(
-                    """INSERT OR IGNORE INTO recipe(name, point) VALUES(?, ?) ON CONFLICT (name) DO NOTHING""",
-                    (
-                        name_recipe,
-                        str_recipe,
-                    ),
-                )
-                con.commit()
-                con.close()
-
-                if cur.rowcount == 0:
-                    self.name.setPlainText(
-                        f"{self.name.toPlainText()}\nЗапись с таким именем уже есть"
-                    )
-                    return
-            else:
-                con = sqlite3.connect("Базы данных/points.db")
-                cur = con.cursor()
-
-                cur.execute(
-                    """UPDATE recipe 
-                    SET name = ?, point = ?
-                    WHERE name = ?""",
-                    (
-                        name_recipe,
-                        str_recipe,
-                        self.input_name,
-                    ),
-                )
-                con.commit()
-                con.close()
-
-                con2 = sqlite3.connect("Базы данных/arts.db")
-                cur2 = con2.cursor()
-
-                cur2.execute(
-                    """UPDATE art 
-                    SET name = ?
-                    WHERE name = ?""",
-                    (
-                        name_recipe,
-                        self.input_name,
-                    ),
-                )
-                con2.commit()
-                con2.close()
-            self.close()
-
-
-class Save_csv:
-    """Класс сохранения в csv файл"""
-
-    def __init__(self):
-        pass
-
-    # Подготовка данных
-    def write_csv(self, cnt_ready, count_recipes, time):
-        self.cnt_ready = cnt_ready
-        self.count_recipes = count_recipes
-        hour = time.total_seconds() // 3600
-        minutes = (time.total_seconds() // 60) % 60
-        sec = time.total_seconds()
-        self.time = f"{hour}:{minutes}:{sec}"
-        with open("count.csv", "r", encoding="utf8") as f:
-            read = csv.reader(f, delimiter=",")
-            head = next(read, False)
-            if head:
-                for row in read:
-                    old_hour, old_minuets, old_sec = row[2].split(":")
-                    old_hour, old_minuets, old_sec = (
-                        int(old_hour),
-                        int(old_minuets),
-                        float(old_sec),
-                    )
-                    hour += old_hour
-                    minutes += old_minuets
-                    sec += old_sec
-                    if sec > 60:
-                        minutes += (sec) // 60
-                        sec = (sec) % 60
-                    if minutes > 60:
-                        hour += (minutes) // 60
-                        minutes = (minutes) % 60
-                    self.time = f"{int(float(hour))}:{int(float(minutes))}:{sec}"
-        self.save()
-
-    # Загруска файла csv в программу
-    def load_open(self):
-        with open("count.csv", "r", encoding="utf8") as f:
-            read = csv.reader(f, delimiter=",")
-            next(f)
-            for row in read:
-                hour, minutes, sec = row[2].split(":")
-                total_hour = int(hour)
-                return row[0], total_hour
-
-    # Сохранение в csv
-    def save(self):
-        with open("count.csv", "w", encoding="utf8") as f:
-            f.write("count_ready,count_recipes,max_time\n")
-            f.write(f"{self.cnt_ready}, {self.count_recipes}, {self.time}")
 
 
 class Main(QMainWindow):
@@ -261,6 +46,14 @@ class Main(QMainWindow):
             Qt.TransformationMode.SmoothTransformation,
         )
 
+        self.add = QShortcut(QKeySequence("Ctrl+O"), self)
+        self.add.activated.connect(self.new_recipe)
+        self.change = QShortcut(QKeySequence("Ctrl+U"), self)
+        self.change.activated.connect(self.open_change)
+        self.delet_recipe = QShortcut(QKeySequence("Delete"), self)
+        self.delet_recipe.activated.connect(self.dele)
+        self.hot_art = QShortcut(QKeySequence("Ctrl+A"), self)
+        self.hot_art.activated.connect(self.add_art)
         self.orig_art = {}
         self.art.setPixmap(scaled_pixmap)
         self.time.setDigitCount(8)
@@ -422,8 +215,8 @@ class Main(QMainWindow):
                 current_widget = self.arts.currentWidget()
                 label_widget = current_widget.findChild(QLabel)
                 pixmap = QPixmap(fname)
-                self.update_image()
                 self.orig_art[label_widget] = pixmap
+                self.update_image()
             con = sqlite3.connect("Базы данных/arts.db")
             cur = con.cursor()
 
@@ -514,13 +307,14 @@ class Main(QMainWindow):
 
     # Метод кнопки открытия второго окна
     def open_change(self):
-        window_recipe = Recipe()
-        name = self.recipes_list.item(self.index).text()
-        window_recipe.old(name)
-        self.list_window.append(window_recipe)
-        window_recipe.destroyed.connect(lambda: self.remove(window_recipe))
-        window_recipe.destroyed.connect(self.update_recipe)
-        window_recipe.show()
+        if self.recipes_list.currentRow() != -1:
+            window_recipe = Recipe()
+            name = self.recipes_list.item(self.index).text()
+            window_recipe.old(name)
+            self.list_window.append(window_recipe)
+            window_recipe.destroyed.connect(lambda: self.remove(window_recipe))
+            window_recipe.destroyed.connect(self.update_recipe)
+            window_recipe.show()
 
     def update_recipe(self):
         if signal_name != []:
