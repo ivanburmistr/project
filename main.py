@@ -168,21 +168,26 @@ class Main(QMainWindow):
         con.close()
 
     def update_image(self):
-        if len(self.recipes_list) != 0:
-            current_widget = self.arts.currentWidget()
-            label_widget = current_widget.findChild(QLabel)
-            label_widget.setSizePolicy(
+        try:
+            if len(self.recipes_list) != 0:
+                current_widget = self.arts.currentWidget()
+                label_widget = current_widget.findChild(QLabel)
+                label_widget.setSizePolicy(
+                    QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored
+                )
+                pixmap = self.orig_art.get(label_widget)
+                if pixmap:
+                    scaled_pixmap = pixmap.scaled(label_widget.size())
+                    label_widget.setPixmap(scaled_pixmap)
+            self.art.setSizePolicy(
                 QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored
             )
-            pixmap = self.orig_art.get(label_widget)
+            pixmap = QPixmap("картинка на добавить.jpg")
             if pixmap:
-                scaled_pixmap = pixmap.scaled(label_widget.size())
-                label_widget.setPixmap(scaled_pixmap)
-        self.art.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
-        pixmap = QPixmap("картинка на добавить.jpg")
-        if pixmap:
-            scaled_pixmap = pixmap.scaled(self.art.size())
-            self.art.setPixmap(scaled_pixmap)
+                scaled_pixmap = pixmap.scaled(self.art.size())
+                self.art.setPixmap(scaled_pixmap)
+        except Exception:
+            pass
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
